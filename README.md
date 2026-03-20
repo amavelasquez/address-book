@@ -9,11 +9,13 @@ $ cd repo
 ```
 
 # Repository should look like this
+```
 .
 ├── app/
 ├── LICENSE
 ├── README.md
 └── requirements.txt
+```
 
 # Install required libraries using the following command
 ```
@@ -26,12 +28,14 @@ $ cd app
 ```
 
 # Repository should look like this
+```
 app
 ├── db/
 ├── models/
 ├── utils/
 ├── address.db
 └── main.py
+```
 
 # Run the app
 ```
