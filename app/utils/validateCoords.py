@@ -1,9 +1,9 @@
 def validate_x_coord(x: float):
-    if x >= -180 and x <= 180:
+    if x >= -180.0 and x <= 180.0:
         return True
     return False
 
 def validate_y_coord(y: float):
-    if y >= -90 and y <= 90:
+    if y >= -90.0 and y <= 90.0:
         return True
     return False

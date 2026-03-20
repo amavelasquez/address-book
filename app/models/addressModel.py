@@ -7,8 +7,8 @@ class Address(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     address_name = Column(String(999), nullable=False)
-    x_coordinate = Column(Float, nullable=False, unique=True)
-    y_coordinate = Column(Float, nullable=False, unique=True)
+    x_coordinate = Column(Float, nullable=False, unique=False)
+    y_coordinate = Column(Float, nullable=False, unique=False)
 
 class AddressCreate(BaseModel):
     address_name: str

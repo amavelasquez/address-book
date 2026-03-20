@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
+from geopy.distance import geodesic
 from typing import List
 
 from db.db_connection import engine, Base, get_db, Session
@@ -16,20 +17,40 @@ def root():
     return{"messge" : "Hello World!"}
 
 #Get address given coordinates
-@app.get("/address/", response_model=AddressResponse)
-def get_address(x_coord: float = Query(...), y_coord: float = Query(...), db: Session = Depends(get_db)):
+@app.get("/address/get-address", response_model=AddressResponse)
+def get_address(x_coord: float=Query(...), y_coord: float=Query(...), db: Session = Depends(get_db)):
     queried_address = db.query(Address).filter(Address.x_coordinate == x_coord, Address.y_coordinate == y_coord).first()
     if not queried_address:
         raise HTTPException(status_code=404, detail="Address does not exist!")
     return queried_address
 
+#Get address and nearby locations given coordinates
+@app.get("/address/nearby-locations", response_model=List[AddressResponse])
+def get_nearby_locations(distance: float=Query(...), x_coord: float=Query(...), y_coord: float=Query(...), db: Session = Depends(get_db)):
+    nearby = []
+    all_locations = db.query(Address).all()
+
+    for location in all_locations:
+        location_coords = (location.y_coordinate, location.x_coordinate)
+        input_coords = (y_coord, x_coord)
+
+        distance_between = geodesic(input_coords, location_coords).km
+        if distance_between <= distance:
+            nearby.append(location)
+    return nearby
+
+#Get all address
+@app.get("/address/get-all-address", response_model=List[AddressResponse])
+def get_all_address(db: Session = Depends(get_db)):
+    return db.query(Address).all()
+
 #Create address
-@app.post("/address/", response_model=AddressResponse)
+@app.post("/address/create-address", response_model=AddressResponse)
 def create_address(address: AddressCreate, db: Session = Depends(get_db)):
     if db.query(Address).filter(Address.x_coordinate == address.x_coordinate, Address.y_coordinate == address.y_coordinate).first():
         raise HTTPException(status_code=400, detail="Address already exists!")
     
-    if validate_x_coord(address.x_coordinate) and validate_y_coord(address.y_coordinate):
+    if not validate_x_coord(address.x_coordinate) or not validate_y_coord(address.y_coordinate):
         raise HTTPException(status_code=400, detail="Invalid input, X coordinate should be between -180 and 180, and Y coordinate should be between -90 and 90")
     
     new_address = Address(**address.model_dump())
@@ -39,9 +60,9 @@ def create_address(address: AddressCreate, db: Session = Depends(get_db)):
     return new_address
 
 #Update address
-@app.put("/address/{address_id}", response_model=AddressResponse)
-def update_address(address_id:int, address:AddressCreate, db: Session = Depends(get_db)):
-    queried_address = db.query(Address).filter(Address.id == address_id).first()
+@app.put("/address/edit-address/", response_model=AddressResponse)
+def update_address(address:AddressCreate, x_coord: float=Query(...), y_coord: float=Query(...), db: Session = Depends(get_db)):
+    queried_address = db.query(Address).filter(Address.x_coordinate == x_coord, Address.y_coordinate == y_coord).first()
     if not queried_address:
         raise HTTPException(status_code=404, detail="Address does not exist!")
     
@@ -54,9 +75,9 @@ def update_address(address_id:int, address:AddressCreate, db: Session = Depends(
     return queried_address
 
 #Delete address
-@app.delete("/address/{address_id}")
-def delete_user(address_id:int, db: Session = Depends(get_db)):
-    queried_address = db.query(Address).filter(Address.id == address_id).first()
+@app.delete("/address/delete-address/")
+def delete_address(x_coord: float=Query(...), y_coord: float=Query(...), db: Session = Depends(get_db)):
+    queried_address = db.query(Address).filter(Address.x_coordinate == x_coord, Address.y_coordinate == y_coord).first()
     if not queried_address:
         raise HTTPException(status_code=404, detail="Address does not exist!")
     
